@@ -1,38 +1,57 @@
-name: Build Buildroot Toolchain
+name: Build Toolchain with webos_tv_defconfig
 
+# Trigger this workflow manually
 on:
-  workflow_dispatch:  # This triggers the workflow manually via the GitHub UI
+  workflow_dispatch:
+    inputs:
+      build_target:
+        description: 'Target platform for the build'
+        required: true
+        default: 'webos_tv_defconfig'
+        type: string
 
 jobs:
-  build:
-    runs-on: ubuntu-latest  # Use the latest Ubuntu runner
+  build_toolchain:
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Set up dependencies
+      # Step 2: Set up dependencies (e.g., install necessary tools)
+      - name: Install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y git build-essential gawk make gcc binutils libncurses-dev bc
+          sudo apt update
+          sudo apt install -y build-essential git wget python3 python3-pip
 
-      - name: Clone Buildroot repository
+      # Step 3: Download and install Buildroot (if not already available)
+      - name: Clone Buildroot
         run: |
-          git clone https://github.com/lord-grey/buildroot-nc4.git
-          cd buildroot-nc4
+          git clone --depth=1 https://github.com/buildroot/buildroot.git
+          cd buildroot
+          git checkout master
 
-      - name: Configure Buildroot for webos_tv_defconfig
+      # Step 4: Set the Buildroot configuration (webos_tv_defconfig)
+      - name: Set Buildroot config to webos_tv_defconfig
         run: |
-          cd buildroot-nc4
+          cd buildroot
           make webos_tv_defconfig
 
+      # Step 5: Build the toolchain
       - name: Build the toolchain
         run: |
-          cd buildroot-nc4
+          cd buildroot
           make toolchain
 
-      - name: Upload the toolchain as an artifact
+      # Step 6: Archive the toolchain
+      - name: Archive toolchain
         uses: actions/upload-artifact@v3
         with:
-          name: buildroot-toolchain
-          path: buildroot-nc4/output/host/
+          name: webos_toolchain
+          path: buildroot/output/host/bin/*
+
+      # Step 7: Optional - Clean up after the build
+      - name: Clean up build directory
+        run: |
+          rm -rf buildroot
