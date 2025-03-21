@@ -10,6 +10,11 @@ on:
         default: 'webos_tv_defconfig'
         type: string
 
+env:
+        TOOLCHAIN_TARGET: webos
+        DEFCONFIG: webos_tv_defconfig
+        BR2_CCACHE_DIR: ${HOME}/.buildroot-ccache-webos
+        
 jobs:
   build_toolchain:
     runs-on: ubuntu-latest
@@ -36,20 +41,20 @@ jobs:
       - name: Set Buildroot config to webos_tv_defconfig
         run: |
           cd buildroot
-          make webos_tv_defconfig
+          make ${DEFCONFIG}
 
       # Step 5: Build the toolchain
       - name: Build the toolchain
         run: |
           cd buildroot
-          make toolchain
+          make sdk
 
       # Step 6: Archive the toolchain
       - name: Archive toolchain
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: webos_toolchain
-          path: buildroot/output/host/bin/*
+          path: buildrootoutput/images/*_sdk-buildroot.tar.gz
 
       # Step 7: Optional - Clean up after the build
       - name: Clean up build directory
