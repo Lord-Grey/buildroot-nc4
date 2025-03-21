@@ -1,0 +1,38 @@
+name: Build Buildroot Toolchain
+
+on:
+  workflow_dispatch:  # This triggers the workflow manually via the GitHub UI
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  # Use the latest Ubuntu runner
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git build-essential gawk make gcc binutils libncurses-dev bc
+
+      - name: Clone Buildroot repository
+        run: |
+          git clone https://github.com/lord-grey/buildroot-nc4.git
+          cd buildroot-nc4
+
+      - name: Configure Buildroot for webos_tv_defconfig
+        run: |
+          cd buildroot-nc4
+          make webos_tv_defconfig
+
+      - name: Build the toolchain
+        run: |
+          cd buildroot-nc4
+          make toolchain
+
+      - name: Upload the toolchain as an artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: buildroot-toolchain
+          path: buildroot-nc4/output/host/
